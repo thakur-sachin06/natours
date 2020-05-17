@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { showAlert } from './alert';
 
-const BASE_URL = 'http://localhost:8000/';
-const UPDATE_DATA_END_POINT = `${BASE_URL}api/v1/users/updateMe`;
-const UPDATE_PASSWORD_END_POINT = `${BASE_URL}api/v1/users/updatePassword`;
+const UPDATE_DATA_END_POINT = `/api/v1/users/updateMe`;
+const UPDATE_PASSWORD_END_POINT = `/api/v1/users/updatePassword`;
 
 //type is either data(name,email) or password
 export const updateUserDataAndPassword = async (data, type) => {

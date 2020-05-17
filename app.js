@@ -10,6 +10,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 const xssClean = require('xss-clean');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
 
@@ -59,6 +60,8 @@ app.use(
     ],
   })
 ); //prevent parameter pollution
+
+app.use(compression());
 
 //Our Own MIDDLEWARE. Adding date property to our request object.
 
