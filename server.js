@@ -23,6 +23,6 @@ mongoose
     console.log('connection with mongodb is successfull');
   });
 
-const port = 8000; // all env variables are in process.env object.
+const port = process.env.PORT || 8000; // all env variables are in process.env object.
 
 app.listen(port, () => {});
