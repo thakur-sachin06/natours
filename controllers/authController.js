@@ -85,7 +85,6 @@ exports.login = catchAsync(async (request, response, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
   createSendToken(user, 200, response);
-  next();
 });
 
 exports.logout = (request, response) => {
