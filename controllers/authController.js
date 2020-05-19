@@ -13,16 +13,15 @@ const jwtToken = (id) => {
   });
 };
 
-const createSendToken = (user, statusCode, response) => {
+const createSendToken = (user, statusCode, request, response) => {
   const token = jwtToken(user._id);
-  const cookieOptions = {
+  response.cookie('jwt', token, {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //converting to millisec.
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-  };
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-  response.cookie('jwt', token, cookieOptions); //attaching cookie to response object.
+    secure: request.secure || request.headers['x-forwarded-proto'] === 'https',
+  });
 
   // Remove password from output
   user.password = undefined;
@@ -55,7 +54,7 @@ exports.signup = catchAsync(async (request, response, next) => {
   });
   const resetUrl = `${request.protocol}://${request.get('host')}/me`;
   await new Email(newUser, resetUrl).sendWelcome();
-  createSendToken(newUser, 201, response);
+  createSendToken(newUser, 201, request, response);
 });
 
 exports.login = catchAsync(async (request, response, next) => {
@@ -71,20 +70,11 @@ exports.login = catchAsync(async (request, response, next) => {
   const user = await User.findOne({ email }).select('+password');
   // + is used because in user model for password select is false.
   //To select a field for which select is false we have to use +
-  if (!user) {
+  if (!user || !(await user.comparePasswords(password, user.password))) {
     return next(new AppError('No user exist for this email', 401));
   }
 
-  const isPasswordMatched = await user.comparePasswords(
-    password,
-    user.password
-  );
-  if (!isPasswordMatched) {
-    // if password sent by user and password stored in db dosen't matched
-    //comparePasswords is instance method in userModel. available to call on every document of users.
-    return next(new AppError('Incorrect email or password', 401));
-  }
-  createSendToken(user, 200, response);
+  createSendToken(user, 200, request, response);
 });
 
 exports.logout = (request, response) => {
@@ -231,7 +221,7 @@ exports.resetPassword = catchAsync(async (request, response, next) => {
   //Updating changePasswordAt property of current user document. Done in userModel as a middleware.
 
   //After resetting password logging user in again by sending a JWT to user.
-  createSendToken(user, 200, response);
+  createSendToken(user, 200, request, response);
 });
 
 exports.updatePassword = catchAsync(async (request, response, next) => {
@@ -253,5 +243,5 @@ exports.updatePassword = catchAsync(async (request, response, next) => {
   user.password = request.body.password;
   user.passwordConfirm = request.body.passwordConfirm;
   await user.save();
-  createSendToken(user, 200, response);
+  createSendToken(user, 200, request, response);
 });
